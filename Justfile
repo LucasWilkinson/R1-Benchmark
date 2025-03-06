@@ -47,10 +47,9 @@ serve-sgl:
     --tp 8 \
     --enable-flashinfer-mla
 
-run-scenario backend="vllm" input_len="100" output_len="100" port="8000":
-  uvx --with-requirements requirements-benchmark.txt \
+run-scenario backend="vllm" input_len="100" output_len="100" port="8000" model="/home/vllm-dev/DeepSeek-R1":
     python vllm-benchmarks/benchmarks/benchmark_serving.py \
-    --model /home/vllm-dev/DeepSeek-R1 \
+    --model "{{model}}" \
     --port {{port}} \
     --dataset-name random --ignore-eos \
     --num-prompts 50 \
@@ -60,11 +59,11 @@ run-scenario backend="vllm" input_len="100" output_len="100" port="8000":
     --result-dir results \
     --result-filename {{backend}}-{{input_len}}-{{output_len}}.json
 
-run-sweeps backend="vllm" port="8000":
-  just run-scenario {{backend}} "1000" "1000" {{port}}
-  just run-scenario {{backend}} "5000" "1000" {{port}}
-  just run-scenario {{backend}} "10000" "1000" {{port}}
-  just run-scenario {{backend}} "32000" "1000" {{port}}
+run-sweeps backend="vllm" port="8000" model="/home/vllm-dev/DeepSeek-R1":
+  just run-scenario {{backend}} "1000" "1000" {{port}} {{model}}
+  just run-scenario {{backend}} "5000" "1000" {{port}} {{model}}
+  just run-scenario {{backend}} "10000" "1000" {{port}} {{model}}
+  just run-scenario {{backend}} "32000" "1000" {{port}} {{model}}
 
 show-results:
   uvx --with rich --with pandas python extract-result.py
