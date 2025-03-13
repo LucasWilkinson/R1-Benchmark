@@ -53,13 +53,19 @@ def load_results(results_dir):
                 'backend': file_info['backend'],
                 'input_tokens': file_info['input_tokens'],
                 'output_tokens': file_info['output_tokens'],
-                'output_toks/s': result['output_throughput']
+                'output_toks/s': result['output_throughput'],
+                'req/s': result['request_throughput'],
+                #'mean_itl_ms': result['mean_itl_ms'],
+                'median_itl_ms': result['median_itl_ms'],
+                #'mean_ttft_ms': result['mean_ttft_ms'],
+                'median_ttft_ms': result['median_ttft_ms'],
             })
         except (json.JSONDecodeError, KeyError) as e:
             console.print(f"[red]Error processing {filename}:[/red] {str(e)}")
             continue
 
     df = pd.DataFrame(data)
+    df = df.sort_values('input_tokens', ascending=True)
     if df.empty:
         console.print("[red]Error:[/red] No valid data found in JSON files")
     else:
@@ -144,9 +150,9 @@ def main():
     console.print(f"\nLoading results from {Path(results_dir).absolute()}")
 
     df = load_results(results_dir)
-    if not df.empty:
-        comparison_df = calculate_comparison(df)
-        display_rich_table(comparison_df)
+    # if not df.empty:
+    #     comparison_df = calculate_comparison(df)
+    #     display_rich_table(comparison_df)
 
 if __name__ == "__main__":
     main()

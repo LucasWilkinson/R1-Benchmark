@@ -34,7 +34,38 @@ clone-vllm-benchmarks target_dir="vllm-benchmarks":
 
 serve-vllm:
   VLLM_USE_V1=1 VLLM_ATTENTION_BACKEND=FLASHMLA VLLM_USE_FLASHINFER_SAMPLER=1 \
-    just uvx-vllm vllm serve /home/vllm-dev/DeepSeek-R1 \
+    vllm serve /home/vllm-dev/DeepSeek-R1 \
+      --tensor-parallel-size 8 \
+      --trust-remote-code \
+      --disable-log-requests
+
+serve-vllm-v0:
+  VLLM_USE_V1=0 VLLM_ATTENTION_BACKEND=FLASHMLA VLLM_USE_FLASHINFER_SAMPLER=1 \
+    vllm serve /home/vllm-dev/DeepSeek-R1 \
+      --tensor-parallel-size 8 \
+      --trust-remote-code \
+      --disable-log-requests
+
+serve-vllm-dummy:
+  VLLM_USE_V1=1 VLLM_ATTENTION_BACKEND=FLASHMLA VLLM_USE_FLASHINFER_SAMPLER=1 \
+    vllm serve /home/vllm-dev/DeepSeek-R1 \
+      --tensor-parallel-size 8 \
+      --trust-remote-code \
+      --load-format dummy \
+      --disable-log-requests
+
+serve-vllm-dummy-v0:
+  VLLM_USE_V1=0 VLLM_ATTENTION_BACKEND=FLASHMLA VLLM_USE_FLASHINFER_SAMPLER=1 \
+    vllm serve /home/vllm-dev/DeepSeek-R1 \
+      --tensor-parallel-size 8 \
+      --trust-remote-code \
+      --load-format dummy \
+      --disable-log-requests
+
+serve-vllm-profile:
+  VLLM_TORCH_PROFILER_DIR="./profiles" \
+  VLLM_USE_V1=1 VLLM_ATTENTION_BACKEND=FLASHMLA VLLM_USE_FLASHINFER_SAMPLER=1 \
+    vllm serve /home/vllm-dev/DeepSeek-R1 \
       --tensor-parallel-size 8 \
       --trust-remote-code \
       --load-format dummy \
@@ -64,6 +95,19 @@ run-sweeps backend="vllm" port="8000" model="/home/vllm-dev/DeepSeek-R1":
   just run-scenario {{backend}} "5000" "1000" {{port}} {{model}}
   just run-scenario {{backend}} "10000" "1000" {{port}} {{model}}
   just run-scenario {{backend}} "32000" "1000" {{port}} {{model}}
+
+profile backend="vllm" input_len="5000" output_len="5" port="8000" model="/home/vllm-dev/DeepSeek-R1":
+    python vllm-benchmarks/benchmarks/benchmark_serving.py \
+    --model "{{model}}" \
+    --port {{port}} \
+    --dataset-name random --ignore-eos \
+    --num-prompts 5 \
+    --request-rate 10 \
+    --random-input-len {{input_len}} --random-output-len {{output_len}} \
+    --save-result \
+    --result-dir results \
+    --result-filename {{backend}}-{{input_len}}-{{output_len}}.json \
+    --profile
 
 show-results:
   uvx --with rich --with pandas python extract-result.py
